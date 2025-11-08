@@ -22,6 +22,7 @@ app.use(
 
 const basePath = process.env.BASE_PATH ?? "./data";
 const index = loadIndex();
+const eventClients = {};
 
 app.get("/tests/:id", function (req, res) {
   let responseType = req.header("Accept");
@@ -180,6 +181,33 @@ app.get("/tests/:id/results/:caseId", function (req, res) {
   }
 });
 
+app.get("/events", (req, res) => {
+  // Set headers to keep the connection alive and tell the client we're sending event-stream data
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  let eventId = req.query.id?.toString() ?? "";
+  if (eventId && eventClients[eventId]) {
+    eventClients[eventId].push(res);
+  } else if (eventId) {
+    eventClients[eventId] = [res];
+  }
+
+  // When client closes connection, stop sending events
+  req.on("close", () => {
+    // clearInterval(intervalId);
+    res.end();
+  });
+});
+
+function sendTestsUpdateEvent(eventId: string, data: any) {
+  if (eventClients[eventId]) {
+    for (let res of eventClients[eventId]) {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+  }
+}
+
 function saveTests(tests: any, requestType: string): boolean {
   let result = true;
   if (!fs.existsSync(`${basePath}/${tests.id}`)) {
@@ -262,6 +290,8 @@ function updateResults(testId: string, testCaseResults: any): boolean {
     return result;
   }
   results.updated = Date.now();
+  sendTestsUpdateEvent(testId, results);
+
   if (index.tests[testId]) index.tests[testId].updated = results.updated;
   else
     index.tests[testId] = {
@@ -306,6 +336,7 @@ function updateTestCaseResults(
 
   if (results && results.results && testCaseResults) {
     results.results.push(testCaseResults);
+    sendTestsUpdateEvent(testId + "." + testCaseId, results);
 
     fs.writeFileSync(
       `${basePath}/${testId}/${testCaseId}.yaml`,

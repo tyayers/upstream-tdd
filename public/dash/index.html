@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Upstream Dashboard | Automated Test Results</title>
+        <title>Upstream TDD Dashboard</title>
         <!-- Load Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
         <!-- Load Lucide Icons -->
@@ -62,11 +62,11 @@
     >
         <header class="mb-10 border-b border-gray-700 pb-4">
             <h1 class="text-4xl font-extrabold tracking-tight">
-                <span class="text-primary-accent">Upstream</span>
+                <span class="text-primary-accent">Upstream TDD</span>
                 <span class="text-accent-green">|</span> Dashboard
             </h1>
             <p class="text-gray-400">
-                Real-time status view of all automated test suites.
+                Real-time overview of all test suite results.
             </p>
         </header>
 
@@ -107,6 +107,39 @@
                 results: {},
             };
 
+            let dataEventHandler = (event) => {
+                if (event && event.data) {
+                    TEST_DATA = JSON.parse(event.data);
+                    refreshDashboard();
+                }
+            };
+
+            let dataErrorHandler = (event) => {
+                console.log("Error occurred, trying to reconnect:", event);
+                eventSource = new EventSource(`/events?id=${testId}`);
+                eventSource.onmessage = dataEventHandler;
+                eventSource.onerror = dataErrorHandler;
+            };
+
+            var eventSource = new EventSource(`/events?id=${testId}`);
+            eventSource.onmessage = dataEventHandler;
+            eventSource.onerror = dataErrorHandler;
+
+            // Log connection error
+            // eventSource.onerror = function (event) {
+            //     console.log("Error occurred, trying to reconnect:", event);
+            //     eventSource = new EventSource(`/events?id=${testId}`);
+            //     event.onmessage = dataEventHandler;
+            // };
+
+            // Listen for messages from the server
+            // eventSource.onmessage = function (event) {
+            //     if (event && event.data) {
+            //         TEST_DATA = JSON.parse(event.data);
+            //         refreshDashboard();
+            //     }
+            // };
+
             /**
              * Converts a Unix timestamp (seconds) to a human-readable date and time string.
              * @param {number} timestamp - The Unix timestamp in seconds.
@@ -131,6 +164,7 @@
              */
             function renderSummary() {
                 const container = document.getElementById("summary-section");
+                container.innerHTML = "";
                 let totalTests = 0;
                 let totalPassed = 0;
                 let totalFailed = 0;
@@ -277,6 +311,11 @@
                 if (response.status == 200) {
                     TEST_DATA = await response.json();
                 }
+
+                refreshDashboard();
+            }
+
+            function refreshDashboard() {
                 // 1. Render data
                 renderSummary();
                 renderResults();

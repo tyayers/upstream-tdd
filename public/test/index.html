@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Modern Test Results Dashboard</title>
+        <title>Upstream TDD - Test Details</title>
         <!-- Load Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
@@ -113,13 +113,15 @@
     <body class="p-4 md:p-8">
         <div class="mx-auto">
             <header class="mb-8">
-                <h1 class="text-4xl font-extrabold tracking-tight">
-                    <span class="text-primary-accent">Upstream</span>
-                    <span class="text-accent-green">|</span> Dashboard
-                </h1>
-                <p class="text-gray-400">
-                    Real-time status view of all automated test suites.
-                </p>
+                <a onclick="goToOverview()">
+                    <h1 class="text-4xl font-extrabold tracking-tight">
+                        <span class="text-primary-accent">Upstream TDD</span>
+                        <span class="text-accent-green">|</span> Dashboard
+                    </h1>
+                    <p class="text-gray-400">
+                        Real-time overview of test suite results.
+                    </p>
+                </a>
             </header>
 
             <div
@@ -168,144 +170,45 @@
         </div>
 
         <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            let testId = urlParams.get("id");
+            let caseId = urlParams.get("caseId");
+
+            function goToOverview() {
+                window.location.href =
+                    window.location.origin + "/dash?id=" + testId;
+            }
             // Sample Test Data (Using the provided format and adding a few extra cases for demonstration)
-            let rawTestData = {
-                results: {
-                    "api-host-validation-service-A": [
-                        {
-                            reportFormat: "CTRF",
-                            extra: {
-                                testCase: "api-host-validation-service-A",
-                            },
-                            results: {
-                                tool: { name: "apigee" },
-                                summary: {
-                                    tests: 3,
-                                    passed: 2,
-                                    failed: 1,
-                                    start: 1762428056392,
-                                    stop: 1762428056396,
-                                },
-                                tests: [
-                                    {
-                                        name: "$.status_code === 200",
-                                        status: "passed",
-                                        duration: 2,
-                                    },
-                                    {
-                                        name: '$.headers.Host==="httpbin.org"',
-                                        status: "failed",
-                                        message:
-                                            "Value didn't match: httpbin.org (Found: api.internal.net)",
-                                        duration: 0,
-                                    },
-                                    {
-                                        name: "Latency Check < 50ms",
-                                        status: "passed",
-                                        duration: 2,
-                                    },
-                                ],
-                            },
-                        },
-                        {
-                            reportFormat: "CTRF",
-                            extra: {
-                                testCase: "api-host-validation-service-A",
-                            },
-                            results: {
-                                tool: { name: "apigee" },
-                                summary: {
-                                    tests: 1,
-                                    passed: 1,
-                                    failed: 0,
-                                    start: 1762428140453,
-                                    stop: 1762428140454,
-                                },
-                                tests: [
-                                    {
-                                        name: "$.headers.Host===httpbin.org",
-                                        status: "passed",
-                                        duration: 0,
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                    "database-integrity-check-B": [
-                        {
-                            reportFormat: "CTRF",
-                            extra: { testCase: "database-integrity-check-B" },
-                            results: {
-                                tool: { name: "SQLRunner" },
-                                summary: {
-                                    tests: 5,
-                                    passed: 5,
-                                    failed: 0,
-                                    start: 1762428500000,
-                                    stop: 1762428500800,
-                                },
-                                tests: [
-                                    {
-                                        name: "User table record count check",
-                                        status: "passed",
-                                        duration: 150,
-                                    },
-                                    {
-                                        name: "Index existence validation",
-                                        status: "passed",
-                                        duration: 50,
-                                    },
-                                    {
-                                        name: "Schema version compatibility",
-                                        status: "passed",
-                                        duration: 100,
-                                    },
-                                    {
-                                        name: "PK constraint check",
-                                        status: "passed",
-                                        duration: 200,
-                                    },
-                                    {
-                                        name: "FK constraint check",
-                                        status: "passed",
-                                        duration: 100,
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                    "third-party-api-latency": [
-                        {
-                            reportFormat: "CTRF",
-                            extra: { testCase: "third-party-api-latency" },
-                            results: {
-                                tool: { name: "Monitor" },
-                                summary: {
-                                    tests: 2,
-                                    passed: 1,
-                                    failed: 1,
-                                    start: 1762429000000,
-                                    stop: 1762429001500,
-                                },
-                                tests: [
-                                    {
-                                        name: "Endpoint 1 availability",
-                                        status: "passed",
-                                        duration: 500,
-                                    },
-                                    {
-                                        name: "Endpoint 2 response time < 1s",
-                                        status: "failed",
-                                        message:
-                                            "Latency was 1250ms, exceeding threshold.",
-                                        duration: 1250,
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                },
+            let rawTestData = {};
+
+            let dataEventHandler = (event) => {
+                if (event && event.data) {
+                    let responseJson = JSON.parse(event.data);
+                    responseJson.results.reverse();
+                    let tempResponseJson = {
+                        results: {},
+                    };
+                    tempResponseJson.results[responseJson.testCaseId] =
+                        responseJson.results;
+                    rawTestData = tempResponseJson;
+                    renderTestList();
+                }
             };
+
+            let dataErrorHandler = (event) => {
+                console.log("Error occurred, trying to reconnect:", event);
+                eventSource = new EventSource(
+                    `/events?id=${testId + "." + caseId}`,
+                );
+                eventSource.onmessage = dataEventHandler;
+                eventSource.onerror = dataErrorHandler;
+            };
+
+            var eventSource = new EventSource(
+                `/events?id=${testId + "." + caseId}`,
+            );
+            eventSource.onmessage = dataEventHandler;
+            eventSource.onerror = dataErrorHandler;
 
             /**
              * Converts status string to a Tailwind/CSS class name.
@@ -330,9 +233,11 @@
                 const runs = rawTestData.results[testKey];
                 if (!runs || runs.length === 0) return "pending";
 
-                const hasFailure = runs.some(
-                    (run) => run.results.summary.failed > 0,
-                );
+                const hasFailure =
+                    runs[0].results.summary.failed > 0 ? true : false;
+                // const hasFailure = runs.some(
+                //     (run) => run.results.summary.failed > 0,
+                // );
                 return hasFailure ? "fail" : "pass";
             }
 
@@ -381,42 +286,42 @@
                                 : "";
 
                             return `
-                    <div class="p-3 bg-gray-700/50 rounded-md mb-2 text-sm border border-gray-700/80">
-                        <div class="flex items-center">
-                            <span class="traffic-light ${caseStatusClass}"></span>
-                            <span class="font-bold text-lg mr-3 w-20 text-${caseStatusClass === "pass" ? "emerald" : "red"}-400">${testCase.status.toUpperCase()}</span>
-                            <span class="flex-1">${testCase.name}</span>
-                            <span class="text-gray-400 ml-4">${testCase.duration}ms</span>
+                        <div class="p-3 bg-gray-700/50 rounded-md mb-2 text-sm border border-gray-700/80">
+                            <div class="flex items-center">
+                                <span class="traffic-light ${caseStatusClass}"></span>
+                                <span class="font-bold text-lg mr-3 w-20 text-${caseStatusClass === "pass" ? "emerald" : "red"}-400">${testCase.status.toUpperCase()}</span>
+                                <span class="flex-1">${testCase.name}</span>
+                                <span class="text-gray-400 ml-4">${testCase.duration}ms</span>
+                            </div>
+                            ${messageHtml}
                         </div>
-                        ${messageHtml}
-                    </div>
-                `;
+                    `;
                         })
                         .join("");
 
                     card.innerHTML = `
-                <div class="flex items-center justify-between border-b border-gray-700 pb-3 mb-4">
-                    <h3 class="text-xl font-bold text-white">
-                        Run #${runs.length - index}
-                        <span class="text-base font-normal text-gray-400">(${formatDate(summary.start)})</span>
-                    </h3>
-                    <span class="result-status-badge ${statusClass} text-white text-sm font-semibold px-3 py-1 rounded-full shadow-md">
-                        ${runStatus.toUpperCase()}
-                    </span>
-                </div>
+                    <div class="flex items-center justify-between border-b border-gray-700 pb-3 mb-4">
+                        <h3 class="text-xl font-bold text-white">
+                            Run #${runs.length - index}
+                            <span class="text-base font-normal text-gray-400">(${formatDate(summary.start)})</span>
+                        </h3>
+                        <span class="result-status-badge ${statusClass} text-white text-sm font-semibold px-3 py-1 rounded-full shadow-md">
+                            ${runStatus.toUpperCase()}
+                        </span>
+                    </div>
 
-                <div class="grid grid-cols-2 gap-4 text-gray-300 mb-4">
-                    <p><strong>Total Tests:</strong> <span class="text-white">${summary.tests}</span></p>
-                    <p><strong>Duration:</strong> <span class="text-white">${durationMs}ms</span></p>
-                    <p><strong>Passed:</strong> <span class="text-pass-green">${summary.passed}</span></p>
-                    <p><strong>Failed:</strong> <span class="text-fail-red">${summary.failed}</span></p>
-                </div>
+                    <div class="grid grid-cols-2 gap-4 text-gray-300 mb-4">
+                        <p><strong>Total Tests:</strong> <span class="text-white">${summary.tests}</span></p>
+                        <p><strong>Duration:</strong> <span class="text-white">${durationMs}ms</span></p>
+                        <p><strong>Passed:</strong> <span class="text-pass-green">${summary.passed}</span></p>
+                        <p><strong>Failed:</strong> <span class="text-fail-red">${summary.failed}</span></p>
+                    </div>
 
-                <h4 class="text-lg font-semibold mt-6 mb-3 text-gray-200">Individual Test Cases:</h4>
-                <div class="space-y-2">
-                    ${testCasesHtml}
-                </div>
-            `;
+                    <h4 class="text-lg font-semibold mt-6 mb-3 text-gray-200">Individual Test Cases:</h4>
+                    <div class="space-y-2">
+                        ${testCasesHtml}
+                    </div>
+                `;
 
                     detailsContent.appendChild(card);
                 });
@@ -445,11 +350,11 @@
                         "suite-item p-3 rounded-lg flex items-center justify-between text-gray-200";
                     item.dataset.testKey = key;
                     item.innerHTML = `
-                <div class="flex items-center overflow-hidden">
-                    <span class="traffic-light ${suiteStatus}"></span>
-                    <span class="truncate">${key}</span>
-                </div>
-            `;
+                    <div class="flex items-center overflow-hidden">
+                        <span class="traffic-light ${suiteStatus}"></span>
+                        <span class="truncate">${key}</span>
+                    </div>
+                `;
 
                     item.addEventListener("click", () => {
                         // Remove 'active' class from all, add to clicked one
@@ -480,10 +385,6 @@
             }
 
             function initialize() {
-                const urlParams = new URLSearchParams(window.location.search);
-                let testId = urlParams.get("id");
-                let caseId = urlParams.get("caseId");
-
                 fetch("/tests/" + testId + "/results/" + caseId)
                     .then((response) => {
                         if (response.status === 200) return response.json();
