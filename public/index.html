@@ -62,12 +62,12 @@
                             <a
                                 href="#features"
                                 class="text-gray-300 hover:text-primary-accent transition duration-150"
-                                >Features</a
+                                >Background</a
                             >
                             <a
                                 href="#usage"
                                 class="text-gray-300 hover:text-primary-accent transition duration-150"
-                                >CLI Usage</a
+                                >Usage & Pricing</a
                             >
                             <a
                                 href="https://github.com/tyayers/upstream-tdd"
@@ -112,9 +112,16 @@
                 <div class="mt-10">
                     <button
                         id="openModalBtn"
-                        class="px-8 py-4 text-xl font-semibold rounded-xl text-dark-bg bg-primary-accent hover:bg-teal-300 transition duration-300 shadow-xl shadow-primary-accent/30 transform hover:scale-[1.02] active:scale-[0.98]"
+                        class="mr-2 px-8 py-4 text-xl font-semibold rounded-xl text-dark-bg bg-primary-accent hover:bg-teal-300 transition duration-300 shadow-xl shadow-primary-accent/30 transform hover:scale-[1.02] active:scale-[0.98]"
                     >
-                        Create New Test Suite
+                        Create Test Suite
+                    </button>
+                    <button
+                        onclick="openDashboard()"
+                        id="openDashboardButton"
+                        class="ml-2 px-8 py-4 text-xl font-semibold rounded-xl text-dark-bg bg-primary-accent hover:bg-teal-300 transition duration-300 shadow-xl shadow-primary-accent/30 transform hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                        Open Dashboard
                     </button>
                 </div>
             </div>
@@ -126,10 +133,20 @@
             <section id="features" class="grid md:grid-cols-3 gap-8">
                 <div class="md:col-span-3 text-center mb-8">
                     <h2 class="text-4xl font-bold text-gray-200 mb-2">
-                        Quick Start
+                        Background
                     </h2>
                     <p class="text-lg text-gray-400">
-                        Built for speed, reliability, and flexibility.
+                        <a
+                            href="https://en.wikipedia.org/wiki/Test-driven_development"
+                            >TDD</a
+                        >
+                        stands for <b>Test-Driven Development</b>, and is a
+                        practice to improve quality by monitoring detailed test
+                        results in a traffic light format. Any project,
+                        software, product or platform can benefit from TDD
+                        principles, and <b>Upstream TDD</b> provides a simple
+                        and fast platform to pragmatically apply TDD to any
+                        project.
                     </p>
                 </div>
 
@@ -139,7 +156,47 @@
                 >
                     <div class="text-primary-accent mb-3 text-2xl font-bold">
                         <!-- Icon for Orchestration -->
-                        1.
+
+                        <svg
+                            viewBox="0 0 512 512"
+                            version="1.1"
+                            xmlns="http://www.w3.org/2000/svg"
+                            xmlns:xlink="http://www.w3.org/1999/xlink"
+                            class="h-8 w-8"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g
+                                id="SVGRepo_tracerCarrier"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            ></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <title>new-indicator</title>
+                                <g
+                                    id="Page-1"
+                                    stroke="none"
+                                    stroke-width="1"
+                                    fill="none"
+                                    fill-rule="evenodd"
+                                >
+                                    <g
+                                        id="scheduler"
+                                        class="h-8 w-8"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        transform="translate(85.333333, 85.333333)"
+                                    >
+                                        <path
+                                            d="M170.666667,1.42108547e-14 C264.923264,-3.10380131e-15 341.333333,76.4100694 341.333333,170.666667 C341.333333,264.923264 264.923264,341.333333 170.666667,341.333333 C76.4100694,341.333333 2.57539587e-14,264.923264 1.42108547e-14,170.666667 C2.6677507e-15,76.4100694 76.4100694,3.15255107e-14 170.666667,1.42108547e-14 Z M170.666667,42.6666667 C99.9742187,42.6666667 42.6666667,99.9742187 42.6666667,170.666667 C42.6666667,241.359115 99.9742187,298.666667 170.666667,298.666667 C241.359115,298.666667 298.666667,241.359115 298.666667,170.666667 C298.666667,99.9742187 241.359115,42.6666667 170.666667,42.6666667 Z M192,85.3333333 L191.999333,149.333333 L256,149.333333 L256,192 L191.999333,191.999333 L192,256 L149.333333,256 L149.333333,191.999333 L85.3333333,192 L85.3333333,149.333333 L149.333333,149.333333 L149.333333,85.3333333 L192,85.3333333 Z"
+                                            id="Combined-Shape"
+                                        ></path>
+                                    </g>
+                                </g>
+                            </g>
+                        </svg>
+
                         <!--<svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="h-8 w-8"
@@ -155,10 +212,11 @@
                         Create a Test Suite
                     </h3>
                     <p class="text-gray-400">
-                        Click the "Create New Test Suite" button above to create
-                        a suite, and save the ID and link as a secret. Define
-                        tests and assertions in YAML format, POST back to update
-                        at any time.
+                        Click the "Create Test Suite" button above to create a
+                        suite, or visit the GitHub repo for REST calls.
+                        <br /><br />
+                        <b>Important:</b> Save your test id! It will never be
+                        shown again, ever.
                     </p>
                 </div>
 
@@ -167,7 +225,6 @@
                     class="p-6 bg-dark-card rounded-xl border border-gray-800 hover:border-primary-accent/50 transition duration-300 shadow-lg"
                 >
                     <div class="text-purple-400 mb-3 text-2xl font-bold">
-                        2.
                         <!-- Icon for Reporting -->
                         <!--<svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -179,13 +236,39 @@
                                 d="M21 15.01L17 15V3H7V15H3L3.01 15.01L12 21L21 15.01ZM12 4H19V14H5V4H12Z"
                             ></path>
                         </svg>-->
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-8 w-8"
+                            viewBox="0 0 24 24"
+                        >
+                            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                            <g
+                                id="SVGRepo_tracerCarrier"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            ></g>
+                            <g id="SVGRepo_iconCarrier">
+                                <path
+                                    d="M14 10C14 9.44771 13.5523 9 13 9H12.5C9.46243 9 7 11.4624 7 14.5C7 17.5376 9.46243 20 12.5 20H17.5C20.5376 20 23 17.5376 23 14.5C23 12.0091 21.3441 9.90488 19.073 9.22823C18.5098 9.06042 18 9.52887 18 10.1166V10.1683C18 10.6659 18.3745 11.0735 18.8345 11.2634C20.1055 11.788 21 13.0395 21 14.5C21 16.433 19.433 18 17.5 18H12.5C10.567 18 9 16.433 9 14.5C9 12.567 10.567 11 12.5 11H13C13.5523 11 14 10.5523 14 10Z"
+                                    fill="currentColor"
+                                ></path>
+                                <path
+                                    d="M11.5 4C14.5376 4 17 6.46243 17 9.5C17 12.5376 14.5376 15 11.5 15H11C10.4477 15 10 14.5523 10 14C10 13.4477 10.4477 13 11 13H11.5C13.433 13 15 11.433 15 9.5C15 7.567 13.433 6 11.5 6H6.5C4.567 6 3 7.567 3 9.5C3 10.9605 3.89451 12.212 5.16553 12.7366C5.62548 12.9264 6 13.3341 6 13.8317V13.8834C6 14.4711 5.49024 14.9396 4.92699 14.7718C2.65592 14.0951 1 11.9909 1 9.5C1 6.46243 3.46243 4 6.5 4H11.5Z"
+                                    fill="currentColor"
+                                ></path>
+                            </g>
+                        </svg>
                     </div>
                     <h3 class="text-xl font-semibold text-gray-50 mb-3">
-                        Connect apps and platforms
+                        Add test cases
                     </h3>
                     <p class="text-gray-400">
-                        Your applications and platforms can GET the test
-                        definitions, and POST results back to Upstream. Easy!
+                        Test cases are added in the test dashboard. HTTP
+                        services can be tested immediately, others can update
+                        results using a simple REST call.
+                        <br /><br />
                     </p>
                 </div>
 
@@ -194,9 +277,8 @@
                     class="p-6 bg-dark-card rounded-xl border border-gray-800 hover:border-primary-accent/50 transition duration-300 shadow-lg"
                 >
                     <div class="text-pink-400 mb-3 text-2xl font-bold">
-                        3.
                         <!-- Icon for Resilience -->
-                        <!--<svg
+                        <svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="h-8 w-8"
                             viewBox="0 0 24 24"
@@ -205,15 +287,24 @@
                             <path
                                 d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20ZM12 6.5C8.96 6.5 6.5 8.96 6.5 12C6.5 15.04 8.96 17.5 12 17.5C15.04 17.5 17.5 15.04 17.5 12C17.5 8.96 15.04 6.5 12 6.5ZM12 15.5C10.07 15.5 8.5 13.93 8.5 12C8.5 10.07 10.07 8.5 12 8.5C13.93 8.5 15.5 10.07 15.5 12C15.5 13.93 13.93 15.5 12 15.5Z"
                             ></path>
-                        </svg>-->
+                        </svg>
                     </div>
                     <h3 class="text-xl font-semibold text-gray-50 mb-3">
-                        Results update in real-time
+                        View results in real-time
                     </h3>
                     <p class="text-gray-400">
-                        The results are displayed in your dashboard in real-time
-                        as they come in, and can be easily retrieved in CTRF
-                        format with a GET call using your ID.
+                        Results are displayed in real-time in your dashboard,
+                        and can be retrieved in
+                        <a href="https://ctrf.io/docs/specification/examples"
+                            >CTRF</a
+                        >
+                        format in YAML or JSON via REST. Monitor your tests in
+                        real-time at
+                        <b
+                            ><a href="https://tdd.upstr.dev/dash"
+                                >https://tdd.upstr.dev/dash</a
+                            ></b
+                        >.
                     </p>
                 </div>
             </section>
@@ -221,46 +312,30 @@
             <!-- Usage Section -->
             <section id="usage" class="space-y-12">
                 <h2 class="text-4xl font-bold text-gray-200 text-center">
-                    Quick Start: CLI Usage
+                    Usage & Pricing
                 </h2>
 
                 <!-- Step 1 -->
                 <div
                     class="flex flex-col lg:flex-row bg-dark-card p-6 rounded-xl border border-gray-800 shadow-xl"
                 >
-                    <div class="lg:w-1/3 lg:pr-8 mb-4 lg:mb-0">
+                    <div class="lg:pr-8 mb-4 lg:mb-0">
                         <h3
                             class="text-2xl font-semibold text-primary-accent mb-2"
                         >
-                            1. Create Test Suite
+                            Cheap & Easy as SaaS or Self-Deployment
                         </h3>
                         <p class="text-gray-400">
-                            A Test Suite is just an ID and dashboard for tests.
-                            Create by clicking the button above, or sending a
-                            POST message.
+                            The Upstream TDD service is a single container that
+                            just uses a storage directory for tests and results.
+                            Use the SaaS version for unlimited tests completely
+                            for free during the BETA period, or deploy to
+                            <a href="https://cloud.google.com/run"
+                                >Google Cloud Run</a
+                            >
+                            with scale-to-zero during non-use for free/cheap
+                            self-deployments.
                         </p>
-                    </div>
-                    <div class="lg:w-2/3">
-                        <pre
-                            class="bg-gray-900 p-4 rounded-lg text-sm overflow-x-auto border border-gray-700 shadow-inner"
-                        >
-                        <code class="block text-green-300">
-curl -X POST https://tdd.upstr.dev/tests -H "Content-Type: application/yaml" \
-  --data-binary @- << EOF
-
-tests:
-  - name: test response headers.Host prop
-   	url: https://httpbin.org/get
-    path: /get
-    verb: get
-    assertions:
-      - $.headers.Host===httpbin.org
-EOF
-                        </code>
-                        <!--<code class="block text-white">$ npm install -g @upstreamhq/cli</code>
-                        <code class="text-green-300"># Or via pip (for Python environments)</code>
-                        <code class="block text-white">$ pip install upstream-client</code>-->
-                    </pre>
                     </div>
                 </div>
 
@@ -268,52 +343,40 @@ EOF
                 <div
                     class="flex flex-col lg:flex-row bg-dark-card p-6 rounded-xl border border-gray-800 shadow-xl"
                 >
-                    <div class="lg:w-1/3 lg:pr-8 mb-4 lg:mb-0">
+                    <div class="lg:pr-8 mb-4 lg:mb-0">
                         <h3
                             class="text-2xl font-semibold text-primary-accent mb-2"
                         >
-                            2. Initialize Project
+                            Edit test cases in the browser or push via REST
                         </h3>
                         <p class="text-gray-400">
-                            Initialize Upstream in your repository root to
-                            generate the `upstream.config.yml` file.
+                            Test cases can be continually updated in the
+                            dashboard editor, or pushed via REST calls. Test
+                            results can be run for HTTP services by clicking the
+                            "Save & Run" button in the dashboard, or calling the
+                            <b>/run</b> REST endpoint. Results for other
+                            platforms can be ingested via REST calls to the
+                            <b>/results</b> endpoint.
                         </p>
                     </div>
-                    <div class="lg:w-2/3">
-                        <pre
-                            class="bg-gray-900 p-4 rounded-lg text-sm overflow-x-auto border border-gray-700 shadow-inner"
-                        >
-                        <code class="block text-white">$ upstream init</code>
-                        <code class="text-yellow-300"># > Creating upstream.config.yml...</code>
-                        <code class="text-green-300"># > Configuration file successfully created.</code>
-                    </pre>
-                    </div>
                 </div>
-
                 <!-- Step 3 -->
                 <div
                     class="flex flex-col lg:flex-row bg-dark-card p-6 rounded-xl border border-gray-800 shadow-xl"
                 >
-                    <div class="lg:w-1/3 lg:pr-8 mb-4 lg:mb-0">
+                    <div class="lg:pr-8 mb-4 lg:mb-0">
                         <h3
                             class="text-2xl font-semibold text-primary-accent mb-2"
                         >
-                            3. Run & Publish Results
+                            View live results in the dashboard
                         </h3>
                         <p class="text-gray-400">
-                            Execute your local tests and automatically publish
-                            the JUnit XML results to the active test suite.
+                            The service pushes out live result updates to the
+                            dashboard via <b>SSE events</b>. Watch as your test
+                            results improve, monitor the traffic light status of
+                            all tests in true <b>TDD glory</b>. Quick, easy &
+                            pragmatic - how software should be!
                         </p>
-                    </div>
-                    <div class="lg:w-2/3">
-                        <pre
-                            class="bg-gray-900 p-4 rounded-lg text-sm overflow-x-auto border border-gray-700 shadow-inner"
-                        >
-                        <code class="text-green-300"># Replace 'your-test-script' with your actual test command</code>
-                        <code class="block text-white">$ npm run your-test-script && upstream publish ./results/junit.xml --suite-id SUITE-UUID</code>
-                        <code class="text-yellow-300"># Use environment variables in CI/CD pipelines</code>
-                        <code class="block text-white">$ upstream publish --repo-root .</code>
-                    </pre>
                     </div>
                 </div>
             </section>
@@ -324,8 +387,10 @@ EOF
                     Seamless Integration
                 </h2>
                 <p class="text-lg text-gray-400 text-center max-w-2xl mx-auto">
-                    Upstream works with all major CI/CD providers and testing
-                    frameworks out-of-the-box.
+                    Upstream works out-of-the-box for public HTTP services, as
+                    well as in Apigee proxies via policies. Ingesting results
+                    from any platform is easy, so more integrations can be
+                    easily added!
                 </p>
 
                 <div class="grid md:grid-cols-2 gap-8 pt-6">
@@ -334,22 +399,28 @@ EOF
                         class="bg-dark-card p-6 rounded-xl border-t-4 border-l-4 border-purple-500 shadow-xl"
                     >
                         <h3 class="text-2xl font-semibold text-purple-400 mb-4">
-                            CI/CD Setup (GitLab Example)
+                            Public HTTP Services
                         </h3>
                         <p class="text-gray-400 mb-4">
-                            Integrate publishing into your CI pipeline using the
-                            dedicated environment variables.
+                            Public HTTP Services can be tested automatically by
+                            Upstream via fetch calls. Test cases are executed
+                            in-process, and saved as results as well as
+                            broadcast out in real-time to any dashboards that
+                            are listening.
                         </p>
                         <pre
                             class="bg-gray-900 p-4 rounded-lg text-sm overflow-x-auto border border-gray-700 shadow-inner"
                         >
-                        <code class="text-white block">run_tests:</code>
-                        <code class="text-white block">  stage: test</code>
-                        <code class="text-white block">  script:</code>
-                        <code class="text-white block">    - npm install @upstreamhq/cli</code>
-                        <code class="text-white block">    - npm test -- --reporter=junit</code>
-                        <code class="text-white block">    - upstream publish ./junit.xml</code>
-                        <code class="text-gray-500 block">  # Assumes UPSTREAM_API_KEY is configured as a variable</code>
+                        <code class="text-white block">
+tests:
+  - name: test response headers.Host prop
+    url: https://httpbin.org
+    path: /get
+    verb: GET
+    assertions:
+    - $.headers.Host===httpbin.org
+EOF
+                        </code>
                     </pre>
                     </div>
 
@@ -358,22 +429,28 @@ EOF
                         class="bg-dark-card p-6 rounded-xl border-t-4 border-l-4 border-teal-500 shadow-xl"
                     >
                         <h3 class="text-2xl font-semibold text-teal-400 mb-4">
-                            Testing Frameworks (Cypress)
+                            Apigee Proxies
                         </h3>
                         <p class="text-gray-400 mb-4">
-                            No special configuration needed. Just output
-                            standard JUnit XML format and publish.
+                            Add the policies to your proxy, pass in an
+                            <b>x-upstream-id</b> header, and watch as your
+                            internal proxy tests of runtime variables are run
+                            and updated in real-time.
                         </p>
                         <pre
                             class="bg-gray-900 p-4 rounded-lg text-sm overflow-x-auto border border-gray-700 shadow-inner"
                         >
-                        <code class="text-white block"># cypress.config.js snippet</code>
-                        <code class="text-white block">reporter: 'junit',</code>
-                        <code class="text-white block">reporterOptions: {</code>
-                        <code class="text-white block">  mochaFile: 'cypress/results/output.xml',</code>
-                        <code class="text-white block">},</code>
-                        <code class="text-gray-500 block">/* ... then in your script: */</code>
-                        <code class="text-white block">upstream publish cypress/results/output.xml</code>
+                            <code class="text-white block">
+    tests:
+      - name: test prompt variables
+        url: https://api.mycompany.com
+        path: /gemini
+        verb: POST
+        assertions:
+        - llm.promptInput==why is the sky blue?
+        - llm.extimatedTokenLength==4
+    EOF
+                            </code>
                     </pre>
                     </div>
                 </div>
@@ -385,7 +462,7 @@ EOF
             <div
                 class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center text-gray-400"
             >
-                <p>&copy; 2025 Upstream HQ. All rights reserved.</p>
+                <p>Free and Open Source Software, Enjoy!</p>
             </div>
         </footer>
 
@@ -614,6 +691,10 @@ EOF
                     copyToClipboard(linkText, linkCopyMessage);
                 });
             });
+
+            function openDashboard() {
+                window.location.href = "/dash";
+            }
         </script>
     </body>
 </html>

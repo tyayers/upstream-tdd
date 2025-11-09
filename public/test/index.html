@@ -161,10 +161,7 @@
                         Result Details
                     </h2>
                     <div id="details-content">
-                        <p class="text-gray-400 p-8 text-center">
-                            Select a Test Suite from the left panel to view
-                            detailed execution results.
-                        </p>
+                        <p class="text-gray-400 p-8 text-center"></p>
                     </div>
                 </div>
             </div>
@@ -393,20 +390,26 @@
             }
 
             function initialize() {
-                fetch("/tests/" + testId + "/results/" + caseId)
-                    .then((response) => {
-                        if (response.status === 200) return response.json();
-                    })
-                    .then((responseJson) => {
-                        responseJson.results.reverse();
-                        let tempResponseJson = {
-                            results: {},
-                        };
-                        tempResponseJson.results[responseJson.testCaseId] =
-                            responseJson.results;
-                        rawTestData = tempResponseJson;
-                        renderTestList();
-                    });
+                if (testId && caseId) {
+                    fetch("/tests/" + testId + "/results/" + caseId)
+                        .then((response) => {
+                            if (response.status === 200) return response.json();
+                        })
+                        .then((responseJson) => {
+                            responseJson.results.reverse();
+                            let tempResponseJson = {
+                                results: {},
+                            };
+                            tempResponseJson.results[responseJson.testCaseId] =
+                                responseJson.results;
+                            rawTestData = tempResponseJson;
+                            renderTestList();
+                        });
+                } else {
+                    alert(
+                        "Your test suite id could not be found, please check that it is entered exactly as it was returned when created.",
+                    );
+                }
             }
 
             // Initialize the dashboard once the content is loaded

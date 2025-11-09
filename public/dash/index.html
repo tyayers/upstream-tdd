@@ -71,6 +71,27 @@
                 transform: translateY(1px);
                 box-shadow: none;
             }
+
+            /* Modal test input styles */
+            :root {
+                --primary-color: #2dd4bf; /* Indigo-600 */
+            }
+            .card {
+                background-color: #1e293b; /* Slate-800 */
+                border-radius: 1rem;
+                box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s ease;
+            }
+            .button-primary {
+                background-color: var(--primary-color);
+                transition: background-color 0.3s ease;
+            }
+            .button-primary:hover {
+                /*background-color: #4338ca; /* Indigo-700 */*/
+            }
+            .modal-content {
+                background-color: #1e293b;
+            }
         </style>
         <script>
             tailwind.config = {
@@ -165,6 +186,42 @@
                     <!-- Test cards will be injected here by JavaScript -->
                 </div>
             </section>
+
+            <div
+                id="input-modal"
+                class="fixed inset-0 bg-gray-900 bg-opacity-80 z-50 hidden items-center justify-center p-4"
+            >
+                <div class="modal-content card p-6 w-full max-w-md">
+                    <h2 class="text-2xl font-bold mb-4 text-white">
+                        Enter Your Test Suite Id
+                    </h2>
+                    <p class="mb-6 text-slate-300">
+                        This id was generated when you created the test suite.
+                        Always save and secure your unique test id to view and
+                        update test results.
+                    </p>
+
+                    <input
+                        autofocus
+                        type="text"
+                        id="test-id-input"
+                        placeholder="########-####-####-########"
+                        class="w-full p-3 mb-4 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-white-500 focus:border-white-500 placeholder-gray-400 uppercase"
+                    />
+
+                    <button
+                        id="submit-id-button"
+                        class="button-primary w-full text-black font-semibold py-3 rounded-xl hover:shadow-lg hover:shadow-indigo-500/50 transition duration-300"
+                        onclick="handleIdSubmit()"
+                    >
+                        View Results
+                    </button>
+                    <p
+                        id="modal-error"
+                        class="mt-3 text-red-400 text-sm hidden"
+                    ></p>
+                </div>
+            </div>
         </main>
 
         <script>
@@ -372,44 +429,57 @@
              * Initialization function to run on window load.
              */
             async function initializeDashboard() {
+                if (!testId) {
+                    showInputModal();
+                    return;
+                }
                 let response = await fetch(`/tests/${testId}/results`);
                 if (response.status == 200) {
                     TEST_DATA = await response.json();
+                } else {
+                    alert(
+                        "Your test suite id could not be found, please check that it is entered exactly as it was returned when created.",
+                    );
+                    showInputModal();
+                    return;
                 }
 
                 refreshDashboard();
 
-                // 1. Initialize CodeMirror Editor
-                const textarea = document.getElementById(
-                    "yaml-editor-textarea",
-                );
-                editor = CodeMirror.fromTextArea(textarea, {
-                    mode: "yaml",
-                    theme: "dracula",
-                    lineNumbers: true,
-                    indentUnit: 2,
-                    tabSize: 2,
-                    smartIndent: true,
-                    autofocus: true,
-                    lineWrapping: true,
-                    matchBrackets: true,
-                });
-
-                // Make CodeMirror take up full height of its container
-                editor.setSize(null, "100%");
-
                 // load test data from server
-                fetch("/tests/" + testId, {
+                response = await fetch("/tests/" + testId, {
                     headers: {
                         Accept: "application/yaml",
                     },
-                })
-                    .then((response) => {
-                        return response.text();
-                    })
-                    .then((responseContent) => {
-                        editor.setValue(responseContent);
+                });
+                if (response.status == 200) {
+                    let responseContent = await response.text();
+
+                    const textarea = document.getElementById(
+                        "yaml-editor-textarea",
+                    );
+                    editor = CodeMirror.fromTextArea(textarea, {
+                        mode: "yaml",
+                        theme: "dracula",
+                        lineNumbers: true,
+                        indentUnit: 2,
+                        tabSize: 2,
+                        smartIndent: true,
+                        autofocus: true,
+                        lineWrapping: true,
+                        matchBrackets: true,
                     });
+
+                    // Make CodeMirror take up full height of its container
+                    editor.setSize(null, "100%");
+                    editor.setValue(responseContent);
+                } else {
+                    alert(
+                        "Your test suite id could not be found, please check that it is entered exactly as it was returned when created.",
+                    );
+                    showInputModal();
+                    return;
+                }
             }
 
             function refreshDashboard() {
@@ -481,32 +551,26 @@
                 }).then((response) => {
                     console.log(response);
                 });
-                //
-
-                // // Placeholder logic for running tests (displaying a message)
-                // const lineCount = config.split("\n").length;
-
-                // updateConsole(
-                //     `Running tests for a configuration of ${lineCount} lines... (Result: Success!)`,
-                //     "success",
-                // );
-
-                // In a real application, you would send 'config' to a backend service here.
-                // Example of simulated delay:
-                // setTimeout(() => {
-                //     updateConsole(`[${new Date().toLocaleTimeString()}] Tests completed. 2 out of 2 assertions passed.`, 'success');
-                // }, 1500);
             }
 
-            function loadConfiguration() {
-                const savedConfig = localStorage.getItem("upstream_tdd_config");
-                if (savedConfig && editor) {
-                    editor.setValue(savedConfig);
-                    updateConsole(
-                        "Loaded configuration from previous session.",
-                        "info",
-                    );
-                }
+            function showInputModal() {
+                document.getElementById("test-id-input").value = "";
+                document
+                    .getElementById("input-modal")
+                    .classList.remove("hidden");
+                document.getElementById("input-modal").classList.add("flex");
+                document.getElementById("test-id-input").focus();
+            }
+
+            function hideInputModal() {
+                document.getElementById("input-modal").classList.add("hidden");
+                document.getElementById("input-modal").classList.remove("flex");
+            }
+
+            function handleIdSubmit() {
+                hideInputModal();
+                testId = document.getElementById("test-id-input").value;
+                initializeDashboard();
             }
 
             window.onload = initializeDashboard;

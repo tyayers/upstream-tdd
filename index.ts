@@ -80,7 +80,7 @@ app.post("/tests", function (req, res) {
       name: "Mock Target Tests v1",
       tests: [
         {
-          name: "test response header",
+          name: "test response payload",
           url: "https://mocktarget.apigee.net",
           path: "/json",
           verb: "GET",
@@ -95,6 +95,8 @@ app.post("/tests", function (req, res) {
 
   // save tests.yaml and results.yaml
   saveTests(tests, requestType);
+  // do first run
+  runTests(tests);
 
   if (responseType == "application/yaml") {
     res.setHeader("Content-Type", "application/yaml");
