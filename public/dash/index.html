@@ -141,8 +141,10 @@
                 >
                     <a
                         id="publicLink"
-                        class="bg-secondary-dark p-2 rounded-xl"
-                    ></a>
+                        target="_blank"
+                        class="bg-secondary-dark p-2 rounded-xl hover:bg-gray-700"
+                        >Public Dashboard Link ⬀</a
+                    >
                 </p>
             </div>
             <button
@@ -290,6 +292,8 @@
                 var exportAllButton =
                     document.getElementById("exportAllButton");
                 if (exportAllButton) exportAllButton.style.display = "none";
+                var publicLink = document.getElementById("publicLink");
+                if (publicLink) publicLink.style.display = "none";
             }
             var TEST_DATA = {
                 results: {},
@@ -477,7 +481,7 @@
 
                         <!-- Right: Action Button -->
                         <div class="mt-4 lg:mt-0 lg:ml-8 w-full lg:w-auto">
-                            <a href="/test?id=${testId + "&caseId=" + testName}" class="w-full lg:w-auto inline-flex items-center justify-center bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 shadow-md">
+                            <a href="/test?id=${testId + "&caseId=" + testName}" target="_blank" class="w-full lg:w-auto inline-flex items-center justify-center bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 shadow-md">
                                 View Detailed Report
                                 <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
                             </a>
@@ -500,11 +504,10 @@
                 let response = await fetch(`/tests/${testId}/results`);
                 if (response.status == 200) {
                     TEST_DATA = await response.json();
-                    var publicLinkElement =
-                        document.getElementById("publicLink");
-                    publicLink.href =
-                        window.location.origin + "/dash?id=" + viewId;
-                    publicLink.innerHTML = "Public Dashboard Link";
+                    var publicLink = document.getElementById("publicLink");
+                    if (publicLink)
+                        publicLink.href =
+                            window.location.origin + "/dash?id=" + viewId;
                 } else {
                     alert(
                         "Your test suite id could not be found, please check that it is entered exactly as it was returned when created.",
