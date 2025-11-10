@@ -132,16 +132,22 @@
                     <a href="/" class="cursor-pointer">
                         <span class="text-primary-accent">Upstream</span>
                     </a>
-                    <span class="text-accent-green">|</span> Dashboard
+                    <span class="text-accent-green">|</span
+                    ><span id="dashboardTypeLabel"> Dashboard</span>
                 </h1>
 
-                <p class="text-gray-400">
-                    Real-time overview of all test results.
+                <p
+                    class="text-gray-400 mt-2 ml-0 transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    <a
+                        id="publicLink"
+                        class="bg-secondary-dark p-2 rounded-xl"
+                    ></a>
                 </p>
             </div>
             <button
                 onclick="exportAll()"
-                id="openModalBtn"
+                id="exportAllButton"
                 title="Download all test suite files as ZIP"
                 class="mb-6 text-[#020617] px-4 py-2 text-m font-semibold rounded-xl text-dark-bg bg-primary-accent hover:bg-teal-300 transition duration-300 shadow-xl shadow-primary-accent/30 transform hover:scale-[1.02] active:scale-[0.98]"
             >
@@ -173,10 +179,10 @@
                     >
                         <textarea id="yaml-editor-textarea"></textarea>
                     </div>
-                    <div class="mt-4">
+                    <div class="mt-4" id="saveAndRunButton">
                         <button
                             onclick="runTest()"
-                            id="openModalBtn"
+                            id="saveButton"
                             class="text-[#020617] px-4 py-2 text-m font-semibold rounded-xl text-dark-bg bg-primary-accent hover:bg-teal-300 transition duration-300 shadow-xl shadow-primary-accent/30 transform hover:scale-[1.02] active:scale-[0.98]"
                         >
                             Save & Run
@@ -197,7 +203,7 @@
                 </section>
 
                 <!-- Danger Section -->
-                <section class="mb-8">
+                <section class="mb-8" id="dangerZoneSection">
                     <h2
                         class="text-2xl font-semibold text-white mb-6 border-l-4 border-accent-red pl-3"
                     >
@@ -262,6 +268,29 @@
             // Set the core data structure
             const urlParams = new URLSearchParams(window.location.search);
             let testId = urlParams.get("id");
+            let viewId = testId;
+            if (testId && testId.length == 36) {
+                let testIdPieces = testId.split("-");
+                if (testIdPieces.length == 5) {
+                    testIdPieces.splice(testIdPieces.length - 1);
+                    viewId = testIdPieces.join("-");
+                }
+                let dashboardLabelElement =
+                    document.getElementById("dashboardTypeLabel");
+                if (dashboardLabelElement)
+                    dashboardLabelElement.innerHTML = " Admin Dashboard";
+            } else {
+                // in read-only public site, hide admin stuff that won't work anyway
+                var dangerZoneSection =
+                    document.getElementById("dangerZoneSection");
+                if (dangerZoneSection) dangerZoneSection.style.display = "none";
+                var saveAndRunButton =
+                    document.getElementById("saveAndRunButton");
+                if (saveAndRunButton) saveAndRunButton.style.display = "none";
+                var exportAllButton =
+                    document.getElementById("exportAllButton");
+                if (exportAllButton) exportAllButton.style.display = "none";
+            }
             var TEST_DATA = {
                 results: {},
             };
@@ -286,13 +315,13 @@
                 }
                 setTimeout(() => {
                     console.log("Trying to reconnect to test event source...");
-                    eventSource = new EventSource(`/events?id=${testId}`);
+                    eventSource = new EventSource(`/events?id=${viewId}`);
                     eventSource.onmessage = dataEventHandler;
                     eventSource.onerror = dataErrorHandler;
                 }, 5000);
             };
 
-            var eventSource = new EventSource(`/events?id=${testId}`);
+            var eventSource = new EventSource(`/events?id=${viewId}`);
             eventSource.onmessage = dataEventHandler;
             eventSource.onerror = dataErrorHandler;
 
@@ -423,7 +452,7 @@
                             </span>
                             <h3 class="text-xl font-bold text-white mb-2">${testName}</h3>
                             <div class="flex flex-wrap gap-4 text-sm text-gray-400">
-                                <p class="flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-1"></i> ${duration}s</p>
+                                <p class="flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-1"></i> ${duration}ms</p>
                                 <p class="flex items-center"><i data-lucide="calendar" class="w-4 h-4 mr-1"></i> Start: ${startTime}</p>
                                 <p class="flex items-center"><i data-lucide="calendar-off" class="w-4 h-4 mr-1"></i> Stop: ${stopTime}</p>
                             </div>
@@ -470,6 +499,11 @@
                 let response = await fetch(`/tests/${testId}/results`);
                 if (response.status == 200) {
                     TEST_DATA = await response.json();
+                    var publicLinkElement =
+                        document.getElementById("publicLink");
+                    publicLink.href =
+                        window.location.origin + "/dash?id=" + viewId;
+                    publicLink.innerHTML = "Public Dashboard Link";
                 } else {
                     alert(
                         "Your test suite id could not be found, please check that it is entered exactly as it was returned when created.",

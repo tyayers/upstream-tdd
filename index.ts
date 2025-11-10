@@ -27,12 +27,23 @@ const eventClients = {};
 
 app.get("/tests/:id", function (req, res) {
   let responseType = req.header("Accept");
-  if (fs.existsSync(`${basePath}/${req.params.id}/tests.yaml`)) {
+  let testId = req.params.id;
+  let viewId = testId;
+  let testIdPieces = testId.split("-");
+  if (testIdPieces.length == 5) {
+    testIdPieces.splice(testIdPieces.length - 1);
+    viewId = testIdPieces.join("-");
+  }
+  if (fs.existsSync(`${basePath}/${viewId}/tests.yaml`)) {
     let fileContents = fs.readFileSync(
-      `${basePath}/${req.params.id}/tests.yaml`,
+      `${basePath}/${viewId}/tests.yaml`,
       "utf8",
     );
     let tests = YAML.parse(fileContents);
+    if (req.params.id == tests.viewId) {
+      // only view id was sent, so remove test id before returning to client.
+      delete tests.id;
+    }
     if (responseType == "application/yaml") {
       res.setHeader("Content-Type", "application/yaml");
       res.send(
@@ -48,52 +59,95 @@ app.get("/tests/:id", function (req, res) {
 });
 
 app.get("/tests/:id/download", function (req, res) {
-  if (fs.existsSync(`${basePath}/${req.params.id}`)) {
-    let files = fs.readdirSync(`${basePath}/${req.params.id}`);
-    let zipFile = new yazl.ZipFile();
-    for (let file of files) {
-      zipFile.addFile(`${basePath}/${req.params.id}/${file}`, file);
+  let testIdPieces = req.params.id.split("-");
+  testIdPieces.splice(testIdPieces.length - 1);
+  let viewId = testIdPieces.join("-");
+  if (fs.existsSync(`${basePath}/${viewId}/tests.yaml`)) {
+    let fileContents = fs.readFileSync(
+      `${basePath}/${viewId}/tests.yaml`,
+      "utf8",
+    );
+    let tests = YAML.parse(fileContents);
+    // only allow operation if full id was sent
+    if (tests.id === req.params.id) {
+      let files = fs.readdirSync(`${basePath}/${viewId}`);
+      let zipFile = new yazl.ZipFile();
+      for (let file of files) {
+        zipFile.addFile(`${basePath}/${viewId}/${file}`, file);
+      }
+      zipFile.outputStream
+        .pipe(fs.createWriteStream(req.params.id + ".zip"))
+        .on("close", function () {
+          let returnFile = fs.readFileSync(req.params.id + ".zip");
+          res.setHeader("Content-Type", "application/octet-stream");
+          res.status(201).send(returnFile);
+          fs.rmSync(req.params.id + ".zip");
+        });
+      zipFile.end();
+    } else {
+      res.status(401).send("Not authorized.");
     }
-    zipFile.outputStream
-      .pipe(fs.createWriteStream(req.params.id + ".zip"))
-      .on("close", function () {
-        let returnFile = fs.readFileSync(req.params.id + ".zip");
-        res.setHeader("Content-Type", "application/octet-stream");
-        res.status(201).send(returnFile);
-        fs.rmSync(req.params.id + ".zip");
-      });
-    zipFile.end();
   } else {
-    res.status(404).send("Test suite not found.");
+    res.status(404).send("Not found.");
   }
 });
 
 app.put("/tests/:id", function (req, res) {
   let requestType = req.header("Content-Type") ?? "";
-  let responseType = req.header("Accept");
 
   if (!req.body) {
     return res.status(400).send("No data received.");
   }
 
-  let tests: any = req.body;
-  if (tests && requestType == "application/yaml") tests = YAML.parse(tests);
-  else if (!tests) tests = {};
-  tests.id = req.params.id;
+  let testIdPieces = req.params.id.split("-");
+  testIdPieces.splice(testIdPieces.length - 1);
+  let viewId = testIdPieces.join("-");
+  if (fs.existsSync(`${basePath}/${viewId}/tests.yaml`)) {
+    let fileContents = fs.readFileSync(
+      `${basePath}/${viewId}/tests.yaml`,
+      "utf8",
+    );
+    let tests = YAML.parse(fileContents);
+    // only allow operation if full id was sent
+    if (tests.id === req.params.id) {
+      let tests: any = req.body;
+      if (tests && requestType == "application/yaml") tests = YAML.parse(tests);
+      else if (!tests) tests = {};
+      tests.id = req.params.id;
+      tests.viewId = viewId;
 
-  let saveResult = saveTests(tests, requestType);
+      let saveResult = saveTests(tests, requestType);
 
-  if (!saveResult) {
-    res.status(404).send("Test not found.");
-  } else res.send("OK.");
+      if (!saveResult) {
+        res.status(404).send("Test not found.");
+      } else res.send("OK.");
+    } else {
+      res.status(401).send("Not authorized.");
+    }
+  } else {
+    res.status(404).send("Not found.");
+  }
 });
 
 app.delete("/tests/:id", function (req, res) {
-  if (fs.existsSync(`${basePath}/${req.params.id}`)) {
-    fs.rmSync(`${basePath}/${req.params.id}`, {
-      recursive: true,
-    });
-    res.send(`Test ${req.params.id} deleted.`);
+  let testIdPieces = req.params.id.split("-");
+  testIdPieces.splice(testIdPieces.length - 1);
+  let viewId = testIdPieces.join("-");
+  if (fs.existsSync(`${basePath}/${viewId}/tests.yaml`)) {
+    let fileContents = fs.readFileSync(
+      `${basePath}/${viewId}/tests.yaml`,
+      "utf8",
+    );
+    let tests = YAML.parse(fileContents);
+    // only allow operation if full id was sent
+    if (tests.id === req.params.id) {
+      fs.rmSync(`${basePath}/${req.params.id}`, {
+        recursive: true,
+      });
+      res.send(`Test ${req.params.id} deleted.`);
+    } else {
+      res.status(401).send("Not authorized.");
+    }
   } else {
     res.status(404).send("Not found.");
   }
@@ -104,7 +158,9 @@ app.post("/tests", function (req, res) {
   let responseType = req.header("Accept");
 
   let uuid = crypto.randomUUID();
-  console.log(`Creating test ${uuid}.`);
+  let uuidPieces = uuid.split("-");
+  uuidPieces.splice(uuidPieces.length - 1);
+  let vuId = uuidPieces.join("-");
 
   let tests: any = req.body;
   if (tests && requestType == "application/yaml") tests = YAML.parse(tests);
@@ -116,7 +172,7 @@ app.post("/tests", function (req, res) {
           name: "test response payload",
           url: "https://mocktarget.apigee.net",
           path: "/json",
-          verb: "GET",
+          method: "GET",
           assertions: [
             "$.firstName==john",
             "$.city==San Jose",
@@ -126,9 +182,10 @@ app.post("/tests", function (req, res) {
       ],
     };
   tests.id = uuid;
+  tests.viewId = vuId;
 
   // create directory
-  fs.mkdirSync(`${basePath}/${uuid}`, { recursive: true });
+  fs.mkdirSync(`${basePath}/${vuId}`, { recursive: true });
 
   // save tests.yaml and results.yaml
   saveTests(tests, requestType);
@@ -148,44 +205,52 @@ app.post("/tests", function (req, res) {
         },
       ),
     );
-  } else
-    res.status(201).send(
-      JSON.stringify(
-        {
-          id: tests.id,
-        },
-        null,
-        2,
-      ),
-    );
+  } else res.status(201).send(JSON.stringify(tests, null, 2));
 });
 
 app.post("/tests/:id/run", async (req, res) => {
   let requestType = req.header("Content-Type") ?? "";
   let responseType = req.header("Accept");
-  let tests: any = req.body;
-  if (tests && requestType == "application/yaml") tests = YAML.parse(tests);
-  if (tests) saveTests(tests, requestType);
-
-  if (!tests && fs.existsSync(`${basePath}/${req.params.id}/tests.yaml`)) {
+  let testIdPieces = req.params.id.split("-");
+  testIdPieces.splice(testIdPieces.length - 1);
+  let viewId = testIdPieces.join("-");
+  if (fs.existsSync(`${basePath}/${viewId}/tests.yaml`)) {
     let fileContents = fs.readFileSync(
-      `${basePath}/${req.params.id}/tests.yaml`,
+      `${basePath}/${viewId}/tests.yaml`,
       "utf8",
     );
-    tests = YAML.parse(fileContents);
-  }
+    let tests = YAML.parse(fileContents);
+    // only allow operation if full id was sent
+    if (tests.id === req.params.id) {
+      let tests: any = req.body;
+      if (tests && requestType == "application/yaml") tests = YAML.parse(tests);
+      if (tests) saveTests(tests, requestType);
 
-  if (tests) {
-    let results = await runTests(tests);
-    if (responseType == "application/yaml") {
-      res.setHeader("Content-Type", "application/yaml");
-      res.send(
-        YAML.stringify(results, {
-          aliasDuplicateObjects: false,
-          blockQuote: "literal",
-        }),
-      );
-    } else res.send(JSON.stringify(results, null, 2));
+      if (!tests && fs.existsSync(`${basePath}/${viewId}/tests.yaml`)) {
+        let fileContents = fs.readFileSync(
+          `${basePath}/${viewId}/tests.yaml`,
+          "utf8",
+        );
+        tests = YAML.parse(fileContents);
+      }
+
+      if (tests) {
+        let results = await runTests(tests);
+        if (responseType == "application/yaml") {
+          res.setHeader("Content-Type", "application/yaml");
+          res.send(
+            YAML.stringify(results, {
+              aliasDuplicateObjects: false,
+              blockQuote: "literal",
+            }),
+          );
+        } else res.send(JSON.stringify(results, null, 2));
+      } else {
+        res.status(404).send("Not found.");
+      }
+    } else {
+      res.status(401).send("Not authorized.");
+    }
   } else {
     res.status(404).send("Not found.");
   }
@@ -199,31 +264,55 @@ app.post("/tests/:id/results", function (req, res) {
     return res.status(400).send("No data received.");
   }
 
-  let testCaseResults: any = req.body;
-  if (testCaseResults && requestType == "application/yaml")
-    testCaseResults = YAML.parse(testCaseResults);
-  let testCaseId = "";
-  if (
-    testCaseResults &&
-    testCaseResults.extra &&
-    testCaseResults.extra.testCase
-  )
-    testCaseId = testCaseResults.extra.testCase;
+  let testIdPieces = req.params.id.split("-");
+  testIdPieces.splice(testIdPieces.length - 1);
+  let viewId = testIdPieces.join("-");
+  if (fs.existsSync(`${basePath}/${viewId}/tests.yaml`)) {
+    let fileContents = fs.readFileSync(
+      `${basePath}/${viewId}/tests.yaml`,
+      "utf8",
+    );
+    let tests = YAML.parse(fileContents);
+    // only allow operation if full id was sent
+    if (tests.id === req.params.id) {
+      let testCaseResults: any = req.body;
+      if (testCaseResults && requestType == "application/yaml")
+        testCaseResults = YAML.parse(testCaseResults);
+      let testCaseId = "";
+      if (
+        testCaseResults &&
+        testCaseResults.extra &&
+        testCaseResults.extra.testCase
+      )
+        testCaseId = testCaseResults.extra.testCase;
 
-  // update results overview
-  updateResults(req.params.id, testCaseResults);
-  updateTestCaseResults(req.params.id, testCaseId, testCaseResults);
-  if (responseType == "application/yaml") {
-    res.setHeader("Content-Type", "application/yaml");
-    res.status(200).send("OK.");
-  } else res.send("OK.");
+      // update results overview
+      updateResults(viewId, testCaseResults);
+      updateTestCaseResults(viewId, testCaseId, testCaseResults);
+      if (responseType == "application/yaml") {
+        res.setHeader("Content-Type", "application/yaml");
+        res.status(200).send("OK.");
+      } else res.send("OK.");
+    } else {
+      res.status(401).send("Not authorized.");
+    }
+  } else {
+    return res.status(404).send("Not found.");
+  }
 });
 
 app.get("/tests/:id/results", function (req, res) {
   let responseType = req.header("Accept");
-  if (fs.existsSync(`${basePath}/${req.params.id}/results.yaml`)) {
+  let testId = req.params.id;
+  let viewId = testId;
+  let testIdPieces = testId.split("-");
+  if (testIdPieces.length == 5) {
+    testIdPieces.splice(testIdPieces.length - 1);
+    viewId = testIdPieces.join("-");
+  }
+  if (fs.existsSync(`${basePath}/${viewId}/results.yaml`)) {
     let fileContents = fs.readFileSync(
-      `${basePath}/${req.params.id}/results.yaml`,
+      `${basePath}/${viewId}/results.yaml`,
       "utf8",
     );
     let results = YAML.parse(fileContents);
@@ -243,9 +332,16 @@ app.get("/tests/:id/results", function (req, res) {
 
 app.get("/tests/:id/results/:caseId", function (req, res) {
   let responseType = req.header("Accept");
-  if (fs.existsSync(`${basePath}/${req.params.id}/${req.params.caseId}.yaml`)) {
+  let testId = req.params.id;
+  let viewId = testId;
+  let testIdPieces = testId.split("-");
+  if (testIdPieces.length == 5) {
+    testIdPieces.splice(testIdPieces.length - 1);
+    viewId = testIdPieces.join("-");
+  }
+  if (fs.existsSync(`${basePath}/${viewId}/${req.params.caseId}.yaml`)) {
     let fileContents = fs.readFileSync(
-      `${basePath}/${req.params.id}/${req.params.caseId}.yaml`,
+      `${basePath}/${viewId}/${req.params.caseId}.yaml`,
       "utf8",
     );
     let results = YAML.parse(fileContents);
@@ -303,6 +399,7 @@ async function runTests(tests: any): Promise<any> {
               passed: 0,
               failed: 0,
               start: Date.now(),
+              stop: Date.now(),
             },
             tests: [],
           },
@@ -312,8 +409,8 @@ async function runTests(tests: any): Promise<any> {
           let response = await fetch(
             testCaseObject.url + (testCaseObject.path ?? ""),
             {
-              method: testCaseObject.verb ?? "GET",
-              body: testCaseObject.request,
+              method: testCaseObject.method ?? "GET",
+              body: testCaseObject.body,
               headers: testCaseObject.headers,
             },
           );
@@ -328,9 +425,10 @@ async function runTests(tests: any): Promise<any> {
             response,
             responseContent,
           );
+          testResults.results.summary.stop = Date.now();
           results.push(testResults);
-          updateResults(tests.id, testResults);
-          updateTestCaseResults(tests.id, testCaseObject.name, testResults);
+          updateResults(tests.viewId, testResults);
+          updateTestCaseResults(tests.viewId, testCaseObject.name, testResults);
         }
       }
     }
@@ -454,7 +552,7 @@ function sendTestsUpdateEvent(eventId: string, data: any) {
 
 function saveTests(tests: any, requestType: string): boolean {
   let result = true;
-  if (!fs.existsSync(`${basePath}/${tests.id}`)) {
+  if (!fs.existsSync(`${basePath}/${tests.viewId}`)) {
     result = false;
     return result;
   }
@@ -462,7 +560,7 @@ function saveTests(tests: any, requestType: string): boolean {
     case "application/yaml":
       // yaml
       fs.writeFileSync(
-        `${basePath}/${tests.id}/tests.yaml`,
+        `${basePath}/${tests.viewId}/tests.yaml`,
         YAML.stringify(tests, {
           aliasDuplicateObjects: false,
           blockQuote: "literal",
@@ -472,7 +570,7 @@ function saveTests(tests: any, requestType: string): boolean {
     default:
       // json
       fs.writeFileSync(
-        `${basePath}/${tests.id}/tests.yaml`,
+        `${basePath}/${tests.viewId}/tests.yaml`,
         YAML.stringify(tests, {
           aliasDuplicateObjects: false,
           blockQuote: "literal",
@@ -482,9 +580,9 @@ function saveTests(tests: any, requestType: string): boolean {
   }
 
   // create results files, if not exist
-  if (!fs.existsSync(`${basePath}/${tests.id}/results.yaml`)) {
+  if (!fs.existsSync(`${basePath}/${tests.viewId}/results.yaml`)) {
     fs.writeFileSync(
-      `${basePath}/${tests.id}/results.yaml`,
+      `${basePath}/${tests.viewId}/results.yaml`,
       YAML.stringify(
         {
           results: {},
@@ -501,18 +599,18 @@ function saveTests(tests: any, requestType: string): boolean {
   return result;
 }
 
-function updateResults(testId: string, testCaseResults: any): boolean {
+function updateResults(testViewId: string, testCaseResults: any): boolean {
   let result = true;
 
   let resultsContent = fs.readFileSync(
-    `${basePath}/${testId}/results.yaml`,
+    `${basePath}/${testViewId}/results.yaml`,
     "utf8",
   );
   let results: any = undefined;
   if (resultsContent) results = YAML.parse(resultsContent);
   else {
     result = false;
-    console.error(`Could not find results file for test ${testId}`);
+    console.error(`Could not find results file for test ${testViewId}`);
     return result;
   }
   if (
@@ -534,10 +632,10 @@ function updateResults(testId: string, testCaseResults: any): boolean {
     return result;
   }
   results.updated = Date.now();
-  sendTestsUpdateEvent(testId, results);
+  sendTestsUpdateEvent(testViewId, results);
 
   fs.writeFileSync(
-    `${basePath}/${testId}/results.yaml`,
+    `${basePath}/${testViewId}/results.yaml`,
     YAML.stringify(results, {
       aliasDuplicateObjects: false,
       blockQuote: "literal",
@@ -547,15 +645,15 @@ function updateResults(testId: string, testCaseResults: any): boolean {
 }
 
 function updateTestCaseResults(
-  testId: string,
+  testViewId: string,
   testCaseId: string,
   testCaseResults: any,
 ): boolean {
   let result = true;
   let results: any = undefined;
-  if (fs.existsSync(`${basePath}/${testId}/${testCaseId}.yaml`)) {
+  if (fs.existsSync(`${basePath}/${testViewId}/${testCaseId}.yaml`)) {
     let resultsContent = fs.readFileSync(
-      `${basePath}/${testId}/${testCaseId}.yaml`,
+      `${basePath}/${testViewId}/${testCaseId}.yaml`,
       "utf8",
     );
     results = YAML.parse(resultsContent);
@@ -570,10 +668,10 @@ function updateTestCaseResults(
 
   if (results && results.results && testCaseResults) {
     results.results.push(testCaseResults);
-    sendTestsUpdateEvent(testId + "." + testCaseId, results);
+    sendTestsUpdateEvent(testViewId + "." + testCaseId, results);
 
     fs.writeFileSync(
-      `${basePath}/${testId}/${testCaseId}.yaml`,
+      `${basePath}/${testViewId}/${testCaseId}.yaml`,
       YAML.stringify(results, {
         aliasDuplicateObjects: false,
         blockQuote: "literal",
