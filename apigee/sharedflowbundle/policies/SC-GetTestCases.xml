@@ -1,13 +1,13 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<ServiceCallout continueOnError="false" enabled="true" name="SC-GetTestCases">
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ServiceCallout continueOnError="true" enabled="true" name="SC-GetTestCases">
   <DisplayName>SC-GetTestCases</DisplayName>
-  <Properties/>
+  <Properties />
   <Request clearPayload="true" variable="myRequest">
     <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
   </Request>
   <Response>upstreamResponse</Response>
   <HTTPTargetConnection>
-    <Properties/>
+    <Properties />
     <URL>https://tdd.upstr.dev/tests/{upstream.testId}</URL>
   </HTTPTargetConnection>
 </ServiceCallout>

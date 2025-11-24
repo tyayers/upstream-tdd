@@ -93,6 +93,36 @@
             .modal-content {
                 background-color: #1e293b;
             }
+
+            /* Define the custom rotation animation */
+            @keyframes spin-grow {
+                0% {
+                    transform: rotate(0deg) scale(0.9);
+                    opacity: 0.5;
+                    box-shadow: 0 0 10px rgba(45, 212, 191, 0.5); /* Indigo glow */
+                }
+                50% {
+                    transform: rotate(180deg) scale(1.05);
+                    opacity: 1;
+                    box-shadow: 0 0 30px rgba(45, 212, 191, 0.8); /* Pink glow */
+                }
+                100% {
+                    transform: rotate(360deg) scale(0.9);
+                    opacity: 0.5;
+                    box-shadow: 0 0 10px rgba(45, 212, 191, 0.5);
+                }
+            }
+
+            /* Apply the animation to the spinner element */
+            #spinner-ring {
+                width: 4rem; /* 64px */
+                height: 4rem; /* 64px */
+                border: 6px solid transparent;
+                border-top-color: #2dd4bf; /* Indigo */
+                border-bottom-color: #2dd4bf; /* Pink */
+                border-radius: 50%;
+                animation: spin-grow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
         </style>
         <script>
             tailwind.config = {
@@ -125,6 +155,22 @@
     <body
         class="bg-primary-dark text-gray-100 min-h-screen font-sans p-4 md:p-8"
     >
+        <!-- Spinner Wrapper (Centered) -->
+        <div
+            id="spinner-overlay"
+            class="hidden opacity-0 fixed inset-0 bg-gray-900 bg-opacity-90 flex flex-col items-center justify-center transition-opacity duration-500 z-50"
+        >
+            <div
+                class="p-8 bg-gray-800 rounded-xl shadow-2xl flex flex-col items-center"
+            >
+                <!-- The Spinner Ring -->
+                <div id="spinner-ring"></div>
+
+                <p class="mt-6 text-lg font-semibold text-gray-300">
+                    Running tests... Please wait.
+                </p>
+            </div>
+        </div>
         <header
             class="max-w-7xl m-auto mb-10 border-b border-gray-700 pb-4 flex justify-between"
         >
@@ -282,6 +328,7 @@
             const testIdLabel = document.getElementById("testIdLabel");
             const dashboardLabelElement =
                 document.getElementById("dashboardTypeLabel");
+            const spinnerOverlay = document.getElementById("spinner-overlay");
             const urlParams = new URLSearchParams(window.location.search);
             let testId = urlParams.get("id");
             let viewId = testId;
@@ -684,6 +731,10 @@
                     return;
                 }
 
+                spinnerOverlay.classList.remove("hidden");
+                spinnerOverlay.classList.add("opacity-1");
+                spinnerOverlay.classList.remove("opacity-0");
+
                 const config = editor.getValue();
                 fetch(`/tests/${testId}/run`, {
                     method: "POST",
@@ -693,6 +744,11 @@
                     body: config,
                 }).then((response) => {
                     console.log(response);
+                    spinnerOverlay.classList.remove("opacity-1");
+                    spinnerOverlay.classList.add("opacity-0");
+                    setTimeout(() => {
+                        spinnerOverlay.classList.add("hidden");
+                    }, 1000);
                 });
 
                 // update name in case changed

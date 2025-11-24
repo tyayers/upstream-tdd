@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<ServiceCallout continueOnError="false" enabled="true" name="SC-SaveResults">
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ServiceCallout continueOnError="true" enabled="true" name="SC-SaveResults">
   <DisplayName>SC-SaveResults</DisplayName>
-  <Properties/>
+  <Properties />
   <Request clearPayload="true" variable="myRequest">
     <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
     <Set>
@@ -13,7 +13,7 @@
   </Request>
   <Response>calloutResponse</Response>
   <HTTPTargetConnection>
-    <Properties/>
+    <Properties />
     <URL>https://tdd.upstr.dev/tests/{upstream.testId}/results</URL>
   </HTTPTargetConnection>
 </ServiceCallout>

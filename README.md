@@ -1,7 +1,7 @@
 # API Tester
 A simple TDD unit testing framework for APIs.
 
-<img width="700" alt="image" src="https://github.com/user-attachments/assets/1fe854be-15a2-499b-af7f-9dcb291614dd" />
+<img width="700" alt="image" src="https://github.com/user-attachments/assets/aae3a86e-8cd4-4842-8690-e1e6be8b2072" />
 
 🚀 Test the beta version live here: https://tdd.upstr.dev.
 
@@ -38,6 +38,9 @@ The above test suite shows two tests in a test suite.
 1.  **test httpbin get** does a direct test to `https://httpbin.org/get`, first setting the header `Test-Header` and then testing the payload (in JPATH format) properties in the response. This first type of test can be run on any API just using request / response data.
 2. **test apigee proxy httpbin get** tests an apigee proxy to `https://httpbin.org/get`, and has the additional unit testing capability of setting and testing `variables`. In this test we set the variable `testVar` to test456, and then assert that value in the assertions.
 
+## Running tests
+After defining some tests, you can run them either in the web client by pressing the "Run" button
+
 ## Apigee proxy unit tests
 You can do detailed unit tests on Apigee proxies by deploying the **Shared Flow** form this repository into your Apigee org, and then setting the **Pre-proxy** and **Post-proxy** Flow hooks in your environment. This will check if the **x-upstream-id** header is set, and if so run the configured unit tests in the proxy. If no header is set, then nothing is done.
 
@@ -54,6 +57,8 @@ apigeecli flowhooks attach -n PreProxyFlowHook -s SF-Tester-v1 -o $PROJECT_ID -e
 apigeecli flowhooks attach -n PostProxyFlowHook -s SF-Tester-v1 -o $PROJECT_ID -e $ENV -t $(gcloud auth print-access-token)
 ```
 In case you already have shared flows in the Pre-proxy and Post-proxy hooks, then you will have to add a new shared flow that calls both flows.
+
+After you have added the shared flow and the flow-hooks, you can run tests
 
 ## Configuration guide
 ### Headers
